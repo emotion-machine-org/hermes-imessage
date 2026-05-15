@@ -70,23 +70,6 @@ plugins:
     - imessage
 ```
 
-## How it works
-
-```
-iPhone / Android   →   Linq   →   Claw Messenger server   →   WebSocket   →   Hermes
-                                                                                  │
-                                                                                  ▼
-                                                                              Hermes agent
-                                                                                  │
-                                                                                  ▼
-                                                                            Reply via WS
-                                                                                  │
-                                                                                  ▼
-                                                                    iPhone / Android receives
-```
-
-The plugin holds one persistent WebSocket connection per gateway run, with automatic reconnection, 30-second app-level ping/pong, and resync of missed messages after a disconnect.
-
 ## Agent tools
 
 | Tool | Use |

@@ -1,6 +1,6 @@
 [project]
 name = "hermes-imessage"
-version = "0.1.1"
+version = "0.1.2"
 description = "iMessage, RCS & SMS for Hermes Agent — no Mac required (powered by Claw Messenger)"
 readme = "README.md"
 requires-python = ">=3.11"
