@@ -84,10 +84,13 @@ async def test_inbound_dm_dispatches_message_event(fake_server, make_adapter):
     captured: List[Any] = []
 
     async def handler(ws, srv):
-        # Push an inbound DM
+        # Push an inbound DM — server also includes chatId (the chat-record
+        # UUID) even for DMs. The adapter must NOT use that UUID as chat_id
+        # for DMs; it should route replies by phone.
         await ws.send(json.dumps({
             "type": "message", "from": "+15551234567",
             "text": "hi there", "messageId": "msg_inbound_1",
+            "chatId": "chat_record_uuid_999",
             "isGroup": False, "attachments": [],
         }))
         async for raw in ws:
@@ -111,7 +114,8 @@ async def test_inbound_dm_dispatches_message_event(fake_server, make_adapter):
     ev = captured[0]
     assert ev.text == "hi there"
     assert ev.source.chat_type == "dm"
-    assert ev.source.chat_id == "+15551234567"
+    assert ev.source.chat_id == "+15551234567"  # phone, not UUID
+    assert ev.source.chat_id_alt == "chat_record_uuid_999"
     assert ev.source.user_id == "+15551234567"
     assert ev.message_id == "msg_inbound_1"
 

@@ -314,7 +314,11 @@ class ClawMessengerAdapter(BasePlatformAdapter):
         text = str(data.get("text") or "")
         message_id = str(data.get("messageId") or "")
         is_group = bool(data.get("isGroup"))
-        chat_id = str(data.get("chatId") or from_phone)
+        # For DMs use the sender phone as the chat_id so replies route by phone;
+        # the chat-record UUID is stashed in chat_id_alt for traceability.
+        # For groups the chat_id IS the chatId UUID — that's how replies route.
+        chat_record_id = str(data.get("chatId") or "")
+        chat_id = chat_record_id if is_group else from_phone
         attachments = data.get("attachments") or []
 
         # Persist last-seen timestamp for sync-on-reconnect
@@ -340,6 +344,7 @@ class ClawMessengerAdapter(BasePlatformAdapter):
             chat_type="group" if is_group else "dm",
             user_id=from_phone,
             user_name=from_phone,
+            chat_id_alt=chat_record_id or None,
         )
         event = MessageEvent(
             text=text,
