@@ -12,6 +12,36 @@ import pytest
 import websockets
 
 
+# Register the platform in Hermes' platform_registry once per test session so
+# ``Platform("claw_messenger")`` resolves. This mirrors what Hermes does at
+# runtime via the plugin loader.
+@pytest.fixture(scope="session", autouse=True)
+def _register_platform() -> None:
+    try:
+        from gateway.platform_registry import PlatformEntry, platform_registry
+    except Exception:
+        # Tests that don't import Hermes still need to import this module
+        return
+    if platform_registry.get("claw_messenger") is not None:
+        return
+    from hermes_claw_messenger.adapter import (
+        ClawMessengerAdapter,
+        check_requirements,
+        validate_config,
+    )
+    platform_registry.register(
+        PlatformEntry(
+            name="claw_messenger",
+            label="Claw Messenger",
+            adapter_factory=lambda cfg: ClawMessengerAdapter(cfg),
+            check_fn=check_requirements,
+            validate_config=validate_config,
+            source="plugin",
+            max_message_length=10000,
+        )
+    )
+
+
 @pytest.fixture
 def fake_server():
     """Returns a context manager that yields a `FakeServer` running on a random port."""
