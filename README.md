@@ -1,6 +1,6 @@
-# hermes-claw-messenger
+# hermes-imessage
 
-iMessage, RCS, and SMS for [Hermes Agent](https://hermes-agent.nousresearch.com/) — via the [Claw Messenger](https://clawmessenger.com) relay. No Mac required, no SIM required.
+iMessage, RCS, and SMS for [Hermes Agent](https://hermes-agent.nousresearch.com/). No Mac required, no SIM required. Powered by the [Claw Messenger](https://clawmessenger.com) relay.
 
 Your Hermes agent can:
 
@@ -14,36 +14,31 @@ Your Hermes agent can:
 
 ```bash
 # 1. Install
-pip install hermes-claw-messenger
+pip install hermes-imessage
 
-# 2. Enable the plugin
+# 2. Enable the plugin in ~/.hermes/config.yaml
 #    NOTE: `hermes plugins enable` cannot currently see entry-point plugins
-#    (Hermes UX bug). Add the line manually to ~/.hermes/config.yaml:
-#
-#      plugins:
-#        enabled:
-#          - claw-messenger
-#
-#    Or run the one-liner below.
+#    (Hermes UX bug). Add the line manually under a top-level `plugins:` key,
+#    or run the one-liner below.
 python -c "
 from pathlib import Path
 p = Path.home() / '.hermes' / 'config.yaml'
 text = p.read_text() if p.exists() else ''
-if 'claw-messenger' not in text:
-    p.write_text(text.rstrip() + '\n\nplugins:\n  enabled:\n    - claw-messenger\n')
+if 'imessage' not in text:
+    p.write_text(text.rstrip() + '\n\nplugins:\n  enabled:\n    - imessage\n')
 "
 
-# 3. Enable the agent toolset that exposes claw_messenger_create_group
+# 3. Enable the agent toolset so the create-group tool is reachable
 hermes tools enable hermes-claw-messenger
 
-# 4. Configure the API key
+# 4. Configure the API key (from https://clawmessenger.com/dashboard)
 echo 'CLAW_MESSENGER_API_KEY=cm_live_…' >> ~/.hermes/.env
 
 # 5. Start the gateway
 hermes gateway start
 ```
 
-Then register one or more phone numbers on the Claw Messenger dashboard (or via the API) so inbound messages reach your tenant.
+Then register one or more phone numbers on the Claw Messenger dashboard so inbound messages reach your tenant.
 
 ## Configuration
 
@@ -69,6 +64,10 @@ gateway:
         api_key: cm_live_…             # also accepts CLAW_MESSENGER_API_KEY env
         preferred_service: iMessage
         home_channel: "+15551234567"
+
+plugins:
+  enabled:
+    - imessage
 ```
 
 ## How it works
@@ -112,13 +111,13 @@ When `hermes cron run` executes in a separate process from `hermes gateway`, the
 ## Development
 
 ```bash
-git clone https://github.com/emotion-machine-org/hermes-claw-messenger.git
-cd hermes-claw-messenger
+git clone https://github.com/emotion-machine-org/hermes-imessage.git
+cd hermes-imessage
 pip install -e ".[dev]"
 pytest tests/                              # 41 unit tests, ~7s
 ```
 
-Run the live smoke test against the production relay (needs a real API key):
+Live smoke test against the production relay (needs a real API key):
 
 ```bash
 CLAW_MESSENGER_API_KEY=cm_live_… python -c "
@@ -129,6 +128,13 @@ asyncio.run(standalone_send(PlatformConfig(enabled=True, extra={}),
                             '+15551234567', 'live test'))
 "
 ```
+
+## Naming note
+
+The PyPI package is `hermes-imessage` for discoverability. The internal Python module
+is `hermes_claw_messenger` (matching the underlying Claw Messenger relay's brand) and
+the Hermes platform identifier is `claw_messenger`. Both can appear in logs and config —
+they are the same plugin.
 
 ## License
 

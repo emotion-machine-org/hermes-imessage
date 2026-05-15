@@ -1,12 +1,12 @@
 [project]
-name = "hermes-claw-messenger"
+name = "hermes-imessage"
 version = "0.1.0"
-description = "iMessage, RCS & SMS gateway for Hermes Agent via Claw Messenger"
+description = "iMessage, RCS & SMS for Hermes Agent — no Mac required (powered by Claw Messenger)"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Emotion Machine", email = "egedemir@emotionmachine.ai" }]
-keywords = ["hermes", "hermes-agent", "imessage", "rcs", "sms", "claw-messenger"]
+keywords = ["hermes", "hermes-agent", "imessage", "rcs", "sms", "claw-messenger", "messaging"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
@@ -27,13 +27,16 @@ dev = [
 
 [project.urls]
 Homepage = "https://clawmessenger.com"
-Repository = "https://github.com/emotion-machine-org/hermes-claw-messenger"
+Repository = "https://github.com/emotion-machine-org/hermes-imessage"
 
 [project.entry-points."hermes_agent.plugins"]
 # IMPORTANT: point at the module (no ``:register``). Hermes' entry-point
 # loader expects the target to be a module, then calls ``getattr(mod, "register")``
 # on it. Targeting the callable directly trips a "no register() function" error.
-claw-messenger = "hermes_claw_messenger"
+#
+# The entry-point name "imessage" is the registry key users put in
+# ``plugins.enabled`` in ~/.hermes/config.yaml.
+imessage = "hermes_claw_messenger"
 
 [build-system]
 requires = ["hatchling"]
