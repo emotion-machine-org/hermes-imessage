@@ -13,14 +13,15 @@ Your Hermes agent can:
 ## Quick start
 
 ```bash
-# 1. Install
-pip install hermes-imessage
+# 1. Install into the Hermes venv.
+#    Hermes (curl-installer) ships a uv-managed venv with no system pip,
+#    so use uv with --python pointing at it:
+uv pip install --python ~/.hermes/hermes-agent/venv hermes-imessage
 
-# 2. Enable the plugin in ~/.hermes/config.yaml
-#    NOTE: `hermes plugins enable` cannot currently see entry-point plugins
-#    (Hermes UX bug). Add the line manually under a top-level `plugins:` key,
-#    or run the one-liner below.
-python -c "
+# 2. Enable the plugin in ~/.hermes/config.yaml.
+#    `hermes plugins enable` cannot currently see entry-point plugins, so
+#    edit config.yaml directly (or run the one-liner below):
+python3 -c "
 from pathlib import Path
 p = Path.home() / '.hermes' / 'config.yaml'
 text = p.read_text() if p.exists() else ''
@@ -28,13 +29,20 @@ if 'imessage' not in text:
     p.write_text(text.rstrip() + '\n\nplugins:\n  enabled:\n    - imessage\n')
 "
 
-# 3. Enable the agent toolset so the create-group tool is reachable
+# 3. Enable the agent toolset so claw_messenger_create_group is reachable
 hermes tools enable hermes-claw-messenger
 
-# 4. Configure the API key (from https://clawmessenger.com/dashboard)
+# 4. Map the toolset onto the claw_messenger platform (merge with existing
+#    platform_toolsets:; do not replace other entries).
+#    Adds the block:
+#      platform_toolsets:
+#        claw_messenger:
+#          - hermes-claw-messenger
+
+# 5. Configure the API key (from https://clawmessenger.com/dashboard)
 echo 'CLAW_MESSENGER_API_KEY=cm_live_…' >> ~/.hermes/.env
 
-# 5. Start the gateway
+# 6. Start the gateway
 hermes gateway start
 ```
 
