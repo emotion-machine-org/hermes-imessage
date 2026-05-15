@@ -1,0 +1,47 @@
+[project]
+name = "hermes-claw-messenger"
+version = "0.1.0"
+description = "iMessage, RCS & SMS gateway for Hermes Agent via Claw Messenger"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Emotion Machine", email = "egedemir@emotionmachine.ai" }]
+keywords = ["hermes", "hermes-agent", "imessage", "rcs", "sms", "claw-messenger"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+  "websockets>=12,<17",
+  "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8",
+  "pytest-asyncio>=0.23",
+]
+
+[project.urls]
+Homepage = "https://clawmessenger.com"
+Repository = "https://github.com/emotion-machine-org/hermes-claw-messenger"
+
+[project.entry-points."hermes_agent.plugins"]
+# IMPORTANT: point at the module (no ``:register``). Hermes' entry-point
+# loader expects the target to be a module, then calls ``getattr(mod, "register")``
+# on it. Targeting the callable directly trips a "no register() function" error.
+claw-messenger = "hermes_claw_messenger"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hermes_claw_messenger"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]

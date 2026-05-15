@@ -1,0 +1,30 @@
+name: claw-messenger
+label: Claw Messenger
+kind: platform
+version: 0.1.0
+description: >
+  iMessage, RCS & SMS gateway via Claw Messenger relay (https://clawmessenger.com).
+  Talk to real phones from your Hermes agent — no Mac and no SIM required.
+author: Emotion Machine
+requires_env:
+  - name: CLAW_MESSENGER_API_KEY
+    description: "Claw Messenger API key"
+    prompt: "API key (from https://clawmessenger.com/dashboard)"
+    url: "https://clawmessenger.com/dashboard"
+    password: true
+optional_env:
+  - name: CLAW_MESSENGER_SERVER_URL
+    description: "WebSocket URL (default wss://claw-messenger.onrender.com)"
+    password: false
+  - name: CLAW_MESSENGER_PREFERRED_SERVICE
+    description: "iMessage | RCS | SMS (default: iMessage)"
+    password: false
+  - name: CLAW_MESSENGER_ALLOWED_USERS
+    description: "Comma-separated E.164 numbers / group chat IDs allowed to talk to the bot"
+    password: false
+  - name: CLAW_MESSENGER_ALLOW_ALL_USERS
+    description: "true/false — allow any incoming sender"
+    password: false
+  - name: CLAW_MESSENGER_HOME_CHANNEL
+    description: "Default phone (E.164) or group chatId for cron delivery"
+    password: false
