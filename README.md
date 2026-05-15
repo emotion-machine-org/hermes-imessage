@@ -1,54 +1,134 @@
 # hermes-claw-messenger
 
-iMessage, RCS & SMS messaging platform for [Hermes Agent](https://hermes-agent.nousresearch.com/) via the [Claw Messenger](https://clawmessenger.com) relay. No Mac required, no SIM required — just a Claw Messenger API key.
+iMessage, RCS, and SMS for [Hermes Agent](https://hermes-agent.nousresearch.com/) — via the [Claw Messenger](https://clawmessenger.com) relay. No Mac required, no SIM required.
 
-## Install
+Your Hermes agent can:
+
+- Receive iMessages / RCS / SMS sent to your Claw Messenger number.
+- Reply back as your number.
+- Send to one-on-one chats (DMs) and existing group chats.
+- Create new group chats by calling the `claw_messenger_create_group` tool.
+- Receive image / video / audio / document attachments — they land as cached local files the agent's vision tools can read.
+
+## Quick start
 
 ```bash
+# 1. Install
 pip install hermes-claw-messenger
-hermes plugins enable claw-messenger
-```
 
-Or via git:
+# 2. Enable the plugin
+#    NOTE: `hermes plugins enable` cannot currently see entry-point plugins
+#    (Hermes UX bug). Add the line manually to ~/.hermes/config.yaml:
+#
+#      plugins:
+#        enabled:
+#          - claw-messenger
+#
+#    Or run the one-liner below.
+python -c "
+from pathlib import Path
+p = Path.home() / '.hermes' / 'config.yaml'
+text = p.read_text() if p.exists() else ''
+if 'claw-messenger' not in text:
+    p.write_text(text.rstrip() + '\n\nplugins:\n  enabled:\n    - claw-messenger\n')
+"
 
-```bash
-hermes plugins install emotion-machine-org/hermes-claw-messenger
-```
+# 3. Enable the agent toolset that exposes claw_messenger_create_group
+hermes tools enable hermes-claw-messenger
 
-## Configure
+# 4. Configure the API key
+echo 'CLAW_MESSENGER_API_KEY=cm_live_…' >> ~/.hermes/.env
 
-```bash
-export CLAW_MESSENGER_API_KEY=cm_live_XXXXXXXX_YYYYYYYYY     # from https://clawmessenger.com/dashboard
+# 5. Start the gateway
 hermes gateway start
 ```
 
-Then register one or more phone numbers your agent should receive messages on:
+Then register one or more phone numbers on the Claw Messenger dashboard (or via the API) so inbound messages reach your tenant.
 
-```bash
-curl -X POST https://claw-messenger.onrender.com/api/phone-routes \
-  -H "Authorization: Bearer $CLAW_MESSENGER_API_KEY" \
-  -H "Content-Type: application/json" \
-  -d '{"phone_number": "+15551234567"}'
+## Configuration
+
+All settings can be supplied via environment variables (preferred) or `~/.hermes/config.yaml`.
+
+| Env var | Default | Purpose |
+|---|---|---|
+| `CLAW_MESSENGER_API_KEY` | — | **Required.** From clawmessenger.com/dashboard. |
+| `CLAW_MESSENGER_SERVER_URL` | `wss://claw-messenger.onrender.com` | WebSocket URL of the relay. |
+| `CLAW_MESSENGER_PREFERRED_SERVICE` | `iMessage` | `iMessage` / `RCS` / `SMS`. |
+| `CLAW_MESSENGER_ALLOWED_USERS` | — | Comma-separated allowlist (E.164 phones or group chatIds). |
+| `CLAW_MESSENGER_ALLOW_ALL_USERS` | `false` | If `true`, any sender can talk to the bot. |
+| `CLAW_MESSENGER_HOME_CHANNEL` | — | Default phone or chatId for cron jobs with `deliver=claw_messenger`. |
+
+YAML equivalent:
+
+```yaml
+gateway:
+  platforms:
+    claw_messenger:
+      enabled: true
+      extra:
+        api_key: cm_live_…             # also accepts CLAW_MESSENGER_API_KEY env
+        preferred_service: iMessage
+        home_channel: "+15551234567"
 ```
 
-## Environment variables
+## How it works
 
-| Var | Default | Purpose |
-|---|---|---|
-| `CLAW_MESSENGER_API_KEY` | — | Required. API key from dashboard. |
-| `CLAW_MESSENGER_SERVER_URL` | `wss://claw-messenger.onrender.com` | WebSocket URL. |
-| `CLAW_MESSENGER_PREFERRED_SERVICE` | `iMessage` | `iMessage` / `RCS` / `SMS`. |
-| `CLAW_MESSENGER_ALLOWED_USERS` | — | Comma-separated allowlist (phones or group chatIds). |
-| `CLAW_MESSENGER_ALLOW_ALL_USERS` | `false` | If `true`, any sender can talk to the bot. |
-| `CLAW_MESSENGER_HOME_CHANNEL` | — | Default phone or chatId for `cron deliver=claw_messenger`. |
+```
+iPhone / Android   →   Linq   →   Claw Messenger server   →   WebSocket   →   Hermes
+                                                                                  │
+                                                                                  ▼
+                                                                              Hermes agent
+                                                                                  │
+                                                                                  ▼
+                                                                            Reply via WS
+                                                                                  │
+                                                                                  ▼
+                                                                    iPhone / Android receives
+```
 
-## Capabilities
+The plugin holds one persistent WebSocket connection per gateway run, with automatic reconnection, 30-second app-level ping/pong, and resync of missed messages after a disconnect.
 
-- Send / receive text DMs (E.164 phone numbers)
-- Send / receive group chat messages (Claw Messenger `chatId`)
-- Send / receive media attachments (images, voice, video, documents)
-- Typing indicators (DM only)
-- Tool: `claw_messenger_create_group` — create a new group with 2+ phones and send the first message
+## Agent tools
+
+| Tool | Use |
+|---|---|
+| `claw_messenger_create_group` | Create a new iMessage/RCS/SMS group with two or more E.164 phones and send the first message. Returns the `chat_id` to use for follow-up sends. |
+
+Outbound DMs and replies to existing groups don't need a tool — Hermes routes them through the standard messaging flow.
+
+## Cron delivery (out-of-process)
+
+```yaml
+cron:
+  jobs:
+    - name: morning-summary
+      schedule: "0 9 * * 1-5"
+      prompt: "Send me the day's calendar"
+      deliver: claw_messenger     # → CLAW_MESSENGER_HOME_CHANNEL
+```
+
+When `hermes cron run` executes in a separate process from `hermes gateway`, the plugin's `standalone_sender_fn` opens a one-shot WebSocket connection, delivers the message, and closes. No gateway dependency.
+
+## Development
+
+```bash
+git clone https://github.com/emotion-machine-org/hermes-claw-messenger.git
+cd hermes-claw-messenger
+pip install -e ".[dev]"
+pytest tests/                              # 41 unit tests, ~7s
+```
+
+Run the live smoke test against the production relay (needs a real API key):
+
+```bash
+CLAW_MESSENGER_API_KEY=cm_live_… python -c "
+import asyncio
+from gateway.config import PlatformConfig
+from hermes_claw_messenger.standalone import standalone_send
+asyncio.run(standalone_send(PlatformConfig(enabled=True, extra={}),
+                            '+15551234567', 'live test'))
+"
+```
 
 ## License
 
