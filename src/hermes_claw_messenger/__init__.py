@@ -29,6 +29,18 @@ def register(ctx) -> None:
     )
     from .standalone import standalone_send
 
+    # Agent tool: create a new iMessage / RCS / SMS group.
+    from .tools import CREATE_GROUP_SCHEMA, create_group_handler
+    ctx.register_tool(
+        name="claw_messenger_create_group",
+        toolset="hermes-claw-messenger",
+        schema=CREATE_GROUP_SCHEMA,
+        handler=create_group_handler,
+        is_async=True,
+        description=CREATE_GROUP_SCHEMA["description"],
+        emoji="💬",
+    )
+
     ctx.register_platform(
         name="claw_messenger",
         label="Claw Messenger",

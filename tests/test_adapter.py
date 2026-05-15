@@ -17,24 +17,6 @@ import pytest
 os.environ.setdefault("HERMES_PII_REDACTION", "")
 
 
-@pytest.fixture
-def make_adapter():
-    """Returns a factory that builds a configured ClawMessengerAdapter."""
-    from gateway.config import PlatformConfig
-
-    from hermes_claw_messenger.adapter import ClawMessengerAdapter
-
-    def _make(api_key="cm_live_TEST", server_url="ws://127.0.0.1:9999",
-              preferred_service="iMessage"):
-        os.environ["CLAW_MESSENGER_API_KEY"] = api_key
-        os.environ["CLAW_MESSENGER_SERVER_URL"] = server_url
-        os.environ["CLAW_MESSENGER_PREFERRED_SERVICE"] = preferred_service
-        cfg = PlatformConfig(enabled=True, extra={})
-        return ClawMessengerAdapter(cfg)
-
-    return _make
-
-
 # ---------------------------------------------------------------------------
 # Outbound DM
 # ---------------------------------------------------------------------------

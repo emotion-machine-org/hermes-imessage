@@ -43,6 +43,25 @@ def _register_platform() -> None:
 
 
 @pytest.fixture
+def make_adapter():
+    """Factory for a configured ClawMessengerAdapter pointed at a fake server."""
+    import os as _os
+    from gateway.config import PlatformConfig
+
+    from hermes_claw_messenger.adapter import ClawMessengerAdapter
+
+    def _make(api_key="cm_live_TEST", server_url="ws://127.0.0.1:9999",
+              preferred_service="iMessage"):
+        _os.environ["CLAW_MESSENGER_API_KEY"] = api_key
+        _os.environ["CLAW_MESSENGER_SERVER_URL"] = server_url
+        _os.environ["CLAW_MESSENGER_PREFERRED_SERVICE"] = preferred_service
+        cfg = PlatformConfig(enabled=True, extra={})
+        return ClawMessengerAdapter(cfg)
+
+    return _make
+
+
+@pytest.fixture
 def fake_server():
     """Returns a context manager that yields a `FakeServer` running on a random port."""
     return _fake_server
