@@ -36,6 +36,16 @@ from websockets.exceptions import ConnectionClosed, InvalidStatus
 logger = logging.getLogger(__name__)
 
 
+def _client_id() -> str:
+    """Integration fingerprint sent on the WS handshake (name/version)."""
+    try:
+        from importlib.metadata import version
+
+        return f"hermes-imessage/{version('hermes-imessage')}"
+    except Exception:
+        return "hermes-imessage/unknown"
+
+
 # ---------------------------------------------------------------------------
 # Tunables
 # ---------------------------------------------------------------------------
@@ -189,7 +199,8 @@ class WsClient:
             path = path.rstrip("/") + "/ws"
 
         existing = parsed.query
-        suffix = urlencode({"key": self.api_key})
+        # Client fingerprint so the server can segment usage by integration.
+        suffix = urlencode({"key": self.api_key, "client": _client_id()})
         query = f"{existing}&{suffix}" if existing else suffix
 
         return urlunparse((scheme, parsed.netloc, path, parsed.params, query, parsed.fragment))
